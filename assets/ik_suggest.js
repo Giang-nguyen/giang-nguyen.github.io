@@ -2,6 +2,7 @@
  
 var pluginName = "ik_suggest",
 	defaults = {
+		'instruction':'Enter the text then use up and down errows to see the suggestion terms.',
 		'minLength': 2,
 		'maxResults': 10,
 		'source': []
@@ -40,13 +41,25 @@ var pluginName = "ik_suggest",
 			.wrap('<span class="ik_suggest"></span>') 
 			.on('keydown', {'plugin': plugin}, plugin.onKeyDown) // add keydown event
 			.on('keyup', {'plugin': plugin}, plugin.onKeyUp) // add keyup event
-			.on('focusout', {'plugin': plugin}, plugin.onFocusOut);  // add focusout event
+			.on('focusout', {'plugin': plugin}, plugin.onFocusOut)  // add focusout event
+			.on('focus', {'plugin': plugin}, plugin.onFocus);  // Add onFocus event
+		
+		this.notify = $('<div />')
+			.attr({
+				'role':'region',
+				'aria-live':'polite'
+			});
 		
 		this.list = $('<ul/>').addClass('suggestions');
 		
 		$elem.after(this.notify, this.list);
 				
 	};
+	
+	Plugin.prototype.onFocus = function(event) {
+		var plugin = event.data.plugin;
+		plugin.notify.text(plugin.options.instruction);
+	}
 	
 	/** 
 	 * Handles kedown event on text field.
@@ -98,18 +111,37 @@ var pluginName = "ik_suggest",
 		
 			suggestions = plugin.getSuggestions(plugin.options.source, $me.val());
 				
-				if (suggestions.length) {
-					plugin.list.show();
-				} else {
-					plugin.list.hide();
-				}
-				
-				plugin.list.empty();
-				
-				for(var i = 0, l = suggestions.length; i < l; i++) {
-					$('<li/>').html(suggestions[i])
-					.on('click', {'plugin': plugin}, plugin.onOptionClick) // add click event handler
-					.appendTo(plugin.list);
+						if (suggestions.length) {
+							plugin.list.show();
+						} else {
+							plugin.list.hide();
+						}
+						
+				switch (event.keyCode) {
+					case ik_utils.keys.down:
+						selected = plugin.list.find('.selected');
+						if (selected.length) {
+							msg = selected.removeClass('selected').next().addClass('selected').text();
+						} else {
+							msg = plugin.list.find('li:first').addClass('selected').text();
+						}
+						plugin.notify.text(msg);
+						break;
+					case ik_utils.keys.up:
+						selected = plugin.list.find('selected');
+						if (selected.length) {
+							msg = selected.removeClass('selected').prev().addClass('selected').text();
+						}
+						plugin.notify.text(msg);
+						break;
+					default:
+						plugin.list.empty();
+						
+						for(var i = 0, l = suggestions.length; i < l; i++) {
+							$('<li/>').html(suggestions[i])
+							.on('click', {'plugin': plugin}, plugin.onOptionClick) // add click event handler
+							.appendTo(plugin.list);
+						}
 				}
 	};
 	
@@ -173,6 +205,9 @@ var pluginName = "ik_suggest",
 				if ( regex.test(arr[i]) ) {
 					r.push(arr[i].replace(regex, '<span>$1</span>'));
 				}
+			}
+			if (r.length > 1) {
+				this.notify.text('Suggestions are available. Use up and down errow to navigate.');
 			}
 		}
 
