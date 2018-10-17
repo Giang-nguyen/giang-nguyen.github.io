@@ -34,6 +34,8 @@
 		
 		$elem.attr({
 			'id': id,
+'role': 'region',
+'aria-label': 'accordion',
 'aria-multiselectable': !this.options.autoCollapse
 		}).addClass('ik_accordion');
 			
