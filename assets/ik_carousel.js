@@ -2,6 +2,7 @@
 	
 	var pluginName = 'ik_carousel',
 		defaults = { // default settings
+			'instruction': 'Use left and right errow to navigate between slides.',
 			'animationSpeed' : 3000
 		};
 	 
@@ -34,14 +35,24 @@
 		
 		$elem
 			.attr({
-				'id': id
+				'id': id,
+				'role': 'region',
+				'tabindex': 0,
+				'aria-describedby': id + '_instruction'
 			})
 			.addClass('ik_carousel')
-			.on('mouseenter', {'plugin': plugin}, plugin.stopTimer)
-			.on('mouseleave', {'plugin': plugin}, plugin.startTimer)
+			.on('keydown', {'plugin': plugin}, plugin.onKeyDown)
+			.on('mouseenter blur', {'plugin': plugin}, plugin.stopTimer)
+			.on('mouseleave focus', {'plugin': plugin}, plugin.startTimer);
+		
+		$('<div />')
+			.attr({'id': id + '_instruction'})
+			.text(plugin.options.instruction)
+			.addClass('ik_readersonly')
+			.appendTo($elem);
 		
 		$controls = $('<div/>')
-
+			.attr({'aria-hidden': true})
 			.addClass('ik_controls')
 			.appendTo($elem);
 				
@@ -69,7 +80,8 @@
 				
 				$me.css({
 						'background-image': 'url(' + $src + ')'
-					});	
+					})
+					.attr({'aria-hidden': true});
 				
 				$('<li/>')
 					.on('click', {'plugin': plugin, 'slide': i}, plugin.gotoSlide)
@@ -82,6 +94,30 @@
 		plugin.startTimer({'data':{'plugin': plugin}});
 		
 	};
+	
+/** 
+* Handles keydown event on the next/prev links.
+* 
+* @param {Object} event - Keyboard event.
+* @param {object} event.data - Event data.
+* @param {object} event.data.plugin - Reference to plugin.
+*/
+Plugin.prototype.onKeyDown = function (event) {
+  var plugin = event.data.plugin;
+  switch (event.keyCode) {
+    case ik_utils.keys.left:
+      event.data = {'plugin': plugin, 'slide': 'left'};
+      plugin.gotoSlide(event);
+      break;
+    case ik_utils.keys.right:
+      event.data = {'plugin': plugin, 'slide': 'right'};
+      plugin.gotoSlide(event);
+      break;
+    case ik_utils.keys.esc:
+      plugin.element.blur();
+      break;
+    }
+  }
 	
 	/** 
 	 * Starts carousel timer. 
@@ -101,8 +137,11 @@
 			plugin.timer = null;
 		}
 		
-		plugin.timer = setInterval(plugin.gotoSlide, plugin.options.animationSpeed, {'data':{'plugin': plugin, 'slide': 'right'}});
+if (event.type === 'focus') {
+plugin.element.attr({'aria-live': 'polite'});
+}
 		
+		plugin.timer = setInterval(plugin.gotoSlide, plugin.options.animationSpeed, {'data':{'plugin': plugin, 'slide': 'right'}});
 	};
 	
 	/** 
@@ -115,9 +154,13 @@
 	Plugin.prototype.stopTimer = function (event) {
 		
 		var plugin = event.data.plugin;
+		
+if (event.type === 'blur') {
+plugin.element.removeAttr('aria-live');
+}
+		
 		clearInterval(plugin.timer);
 		plugin.timer = null;
-		
 	};
 	
 	/** 
@@ -167,9 +210,11 @@
 			dir = event.data.dir;
 			
 			active.off( ik_utils.getTransitionEventName() )
+				.attr({'aria-hidden' : true})
 				.removeClass(direction + ' active');
 				
 			next.removeClass('next')
+				.attr({'aria-hidden': false})
 				.addClass('active');
 			
 		});
