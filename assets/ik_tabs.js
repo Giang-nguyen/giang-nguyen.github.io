@@ -30,7 +30,10 @@
 		
 		plugin = this;
 		id = 'tabs' + $('.ik_tabs').length; // create unique id
-		$elem = this.element.addClass('ik_tabs');
+		$elem = this.element.addClass('ik_tabs')
+			.attr({
+				'role': 'region',
+				'aria-label': 'tab panel'});
 		
 		$tabbar = $('<ul/>') // create ul element to hold all tabs
 			.addClass('ik_tabbar cf')
