@@ -2,7 +2,7 @@
  
 var pluginName = "ik_suggest",
 	defaults = {
-		'instruction':'Enter the text then use up and down errows to see the suggestion terms.',
+		'instruction':'Enter the text then use up and down errows to see the suggested terms.',
 		'minLength': 2,
 		'maxResults': 10,
 		'source': []
