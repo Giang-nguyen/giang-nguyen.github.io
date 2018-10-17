@@ -33,7 +33,8 @@
 		plugin = this;
 		
 		$elem.attr({
-			'id': id
+			'id': id,
+'aria-multiselectable': !this.options.autoCollapse
 		}).addClass('ik_accordion');
 			
 		this.headers = $elem.children('dt').each(function(i, el) {
@@ -41,14 +42,19 @@
 			
 			$me = $(el);
 			$btn = $('<div/>').attr({
-          'id': id + '_btn_' + i
+          'id': id + '_btn_' + i,
+'role': 'button',
+'aria-controls': id + '_panel_' + i,
+'aria-expanded': false,
+'tabindex': 0
         })
         .addClass('button')
         .html($me.html())
         .on('click', {'plugin': plugin}, plugin.togglePanel);
         
 			$me.empty().append($btn); // wrap content of each header in an element with role button
-		});
+		})
+		.attr({'role': 'heading'});
 		
 		this.panels = $elem.children('dd').each(function(i, el) {
 			var $me = $(this), id = $elem.attr('id') + '_panel_' + i;
@@ -85,9 +91,11 @@
 				
 				if($btn[0] != $(event.currentTarget)[0]) { 
 					$btn.removeClass('expanded');
+				$btn.attr({'aria-expanded': false});
 					$hdr.next().slideUp(plugin.options.animationSpeed);
 				} else { 
 					$btn.addClass('expanded');
+				$btn.attr({'aria-expanded': true});
 					$hdr.next().slideDown(plugin.options.animationSpeed);
 				}
 			});
@@ -96,6 +104,17 @@
 		
 			isVisible = !!$panel.is(':visible');
 			$panel.slideToggle({ duration: plugin.options.animationSpeed });
+			plugin.headers.each(function(i, el) {
+				var $hdr, $btn; 
+				
+				$hdr = $(el);
+				$btn = $hdr.find('.button');
+				if (isVisible) {
+					$btn.attr({'aria-expanded': false});
+				} else {
+					$btn.attr({'aria-expanded': true});
+				}
+			});
 			
 		}
 	};
